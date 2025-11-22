@@ -2,49 +2,64 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Mail, BookOpen } from "lucide-react";
+import { Plus, Search, Mail, Edit, Trash2 } from "lucide-react";
+import { useSchool } from "@/contexts/SchoolContext";
+import { TeacherFormDialog } from "@/components/TeacherFormDialog";
+import { Teacher } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 export default function Teachers() {
   const [searchQuery, setSearchQuery] = useState("");
-
-  const teachers = [
-    {
-      id: 1,
-      name: "Dr. Sarah Johnson",
-      subject: "Mathematics",
-      email: "sarah.j@school.com",
-      classes: "4 Classes",
-      experience: "10 years",
-    },
-    {
-      id: 2,
-      name: "Prof. Michael Chen",
-      subject: "Physics",
-      email: "michael.c@school.com",
-      classes: "3 Classes",
-      experience: "8 years",
-    },
-    {
-      id: 3,
-      name: "Dr. Emily Brown",
-      subject: "English Literature",
-      email: "emily.b@school.com",
-      classes: "5 Classes",
-      experience: "12 years",
-    },
-    {
-      id: 4,
-      name: "Mr. David Martinez",
-      subject: "Chemistry",
-      email: "david.m@school.com",
-      classes: "3 Classes",
-      experience: "6 years",
-    },
-  ];
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTeacher, setEditTeacher] = useState<Teacher | undefined>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [teacherToDelete, setTeacherToDelete] = useState<string | null>(null);
+  const { teachers, deleteTeacher, classes } = useSchool();
 
   const filteredTeachers = teachers.filter((teacher) =>
     teacher.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const getTeacherClasses = (teacherId: string) => {
+    return classes.filter((c) => c.teacherId === teacherId).length;
+  };
+
+  const handleAddClick = () => {
+    setEditTeacher(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleEditClick = (teacher: Teacher) => {
+    setEditTeacher(teacher);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (teacherId: string) => {
+    setTeacherToDelete(teacherId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (teacherToDelete) {
+      deleteTeacher(teacherToDelete);
+      toast({
+        title: "Success",
+        description: "Teacher deleted successfully",
+      });
+    }
+    setDeleteDialogOpen(false);
+    setTeacherToDelete(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -60,7 +75,7 @@ export default function Teachers() {
             className="pl-10"
           />
         </div>
-        <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+        <Button onClick={handleAddClick} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
           <Plus className="w-4 h-4 mr-2" />
           Add Teacher
         </Button>
@@ -89,7 +104,7 @@ export default function Teachers() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Classes</span>
-                  <span className="font-medium text-foreground">{teacher.classes}</span>
+                  <span className="font-medium text-foreground">{getTeacherClasses(teacher.id)} Classes</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground pt-2">
                   <Mail className="w-4 h-4" />
@@ -98,18 +113,36 @@ export default function Teachers() {
               </div>
 
               <div className="mt-4 pt-4 border-t border-border flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  <BookOpen className="w-4 h-4 mr-1" />
-                  Schedule
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button variant="outline" size="sm" onClick={() => handleEditClick(teacher)}>
+                  <Edit className="w-4 h-4 mr-1" />
                   Edit
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleDeleteClick(teacher.id)}>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <TeacherFormDialog open={dialogOpen} onOpenChange={setDialogOpen} teacher={editTeacher} />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the teacher record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

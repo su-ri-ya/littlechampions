@@ -2,49 +2,60 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Mail, Phone } from "lucide-react";
+import { Plus, Search, Mail, Phone, Edit, Trash2 } from "lucide-react";
+import { useSchool } from "@/contexts/SchoolContext";
+import { StudentFormDialog } from "@/components/StudentFormDialog";
+import { Student } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 export default function Students() {
   const [searchQuery, setSearchQuery] = useState("");
-
-  const students = [
-    {
-      id: 1,
-      name: "Emma Wilson",
-      grade: "Grade 10",
-      email: "emma.w@student.com",
-      phone: "+1 234 567 8901",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "James Smith",
-      grade: "Grade 9",
-      email: "james.s@student.com",
-      phone: "+1 234 567 8902",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Sophia Brown",
-      grade: "Grade 11",
-      email: "sophia.b@student.com",
-      phone: "+1 234 567 8903",
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Oliver Davis",
-      grade: "Grade 10",
-      email: "oliver.d@student.com",
-      phone: "+1 234 567 8904",
-      status: "Active",
-    },
-  ];
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editStudent, setEditStudent] = useState<Student | undefined>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
+  const { students, deleteStudent } = useSchool();
 
   const filteredStudents = students.filter((student) =>
     student.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleAddClick = () => {
+    setEditStudent(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleEditClick = (student: Student) => {
+    setEditStudent(student);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (studentId: string) => {
+    setStudentToDelete(studentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (studentToDelete) {
+      deleteStudent(studentToDelete);
+      toast({
+        title: "Success",
+        description: "Student deleted successfully",
+      });
+    }
+    setDeleteDialogOpen(false);
+    setStudentToDelete(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -60,7 +71,7 @@ export default function Students() {
             className="pl-10"
           />
         </div>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button onClick={handleAddClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <Plus className="w-4 h-4 mr-2" />
           Add Student
         </Button>
@@ -98,17 +109,36 @@ export default function Students() {
               </div>
 
               <div className="mt-4 pt-4 border-t border-border flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  View Details
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button variant="outline" size="sm" onClick={() => handleEditClick(student)}>
+                  <Edit className="w-4 h-4 mr-1" />
                   Edit
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleDeleteClick(student.id)}>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <StudentFormDialog open={dialogOpen} onOpenChange={setDialogOpen} student={editStudent} />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the student record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

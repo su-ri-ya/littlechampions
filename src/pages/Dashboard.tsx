@@ -1,34 +1,43 @@
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, BookOpen, TrendingUp } from "lucide-react";
+import { useSchool } from "@/contexts/SchoolContext";
+import { useMemo } from "react";
 
 export default function Dashboard() {
+  const { students, teachers, classes, attendance } = useSchool();
+
+  const attendanceRate = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const todayRecords = attendance.filter((a) => a.date === today);
+    const present = todayRecords.filter((a) => a.status === "Present").length;
+    const total = todayRecords.length;
+    return total > 0 ? Math.round((present / total) * 100) : 0;
+  }, [attendance]);
+
   const stats = [
     {
       title: "Total Students",
-      value: "1,234",
+      value: students.length.toString(),
       icon: Users,
-      trend: { value: "12% from last month", positive: true },
       color: "primary" as const,
     },
     {
       title: "Total Teachers",
-      value: "87",
+      value: teachers.length.toString(),
       icon: GraduationCap,
-      trend: { value: "5% from last month", positive: true },
       color: "secondary" as const,
     },
     {
       title: "Active Classes",
-      value: "42",
+      value: classes.length.toString(),
       icon: BookOpen,
       color: "accent" as const,
     },
     {
       title: "Attendance Rate",
-      value: "94%",
+      value: `${attendanceRate}%`,
       icon: TrendingUp,
-      trend: { value: "2% from last week", positive: true },
       color: "primary" as const,
     },
   ];
