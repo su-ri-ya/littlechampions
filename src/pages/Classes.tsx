@@ -1,51 +1,67 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, Clock } from "lucide-react";
+import { Plus, Users, Clock, Edit, Trash2, ClipboardCheck } from "lucide-react";
+import { useSchool } from "@/contexts/SchoolContext";
+import { ClassFormDialog } from "@/components/ClassFormDialog";
+import { AttendanceDialog } from "@/components/AttendanceDialog";
+import { Class } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 export default function Classes() {
-  const classes = [
-    {
-      id: 1,
-      name: "Mathematics - Grade 10",
-      teacher: "Dr. Sarah Johnson",
-      students: 32,
-      schedule: "Mon, Wed, Fri - 9:00 AM",
-      room: "Room 201",
-      color: "primary",
-    },
-    {
-      id: 2,
-      name: "Physics - Grade 11",
-      teacher: "Prof. Michael Chen",
-      students: 28,
-      schedule: "Tue, Thu - 10:30 AM",
-      room: "Lab 102",
-      color: "secondary",
-    },
-    {
-      id: 3,
-      name: "English Literature - Grade 9",
-      teacher: "Dr. Emily Brown",
-      students: 35,
-      schedule: "Mon, Wed - 2:00 PM",
-      room: "Room 105",
-      color: "accent",
-    },
-    {
-      id: 4,
-      name: "Chemistry - Grade 10",
-      teacher: "Mr. David Martinez",
-      students: 30,
-      schedule: "Tue, Thu, Fri - 11:00 AM",
-      room: "Lab 201",
-      color: "primary",
-    },
-  ];
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editClass, setEditClass] = useState<Class | undefined>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [classToDelete, setClassToDelete] = useState<string | null>(null);
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+  const { classes, teachers, deleteClass } = useSchool();
 
-  const colorClasses = {
-    primary: "bg-primary text-primary-foreground",
-    secondary: "bg-secondary text-secondary-foreground",
-    accent: "bg-accent text-accent-foreground",
+  const getTeacherName = (teacherId: string) => {
+    const teacher = teachers.find((t) => t.id === teacherId);
+    return teacher?.name || "Unknown";
+  };
+
+  const handleAddClick = () => {
+    setEditClass(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleEditClick = (classData: Class) => {
+    setEditClass(classData);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (classId: string) => {
+    setClassToDelete(classId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleAttendanceClick = (classId: string) => {
+    setSelectedClassId(classId);
+    setAttendanceDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (classToDelete) {
+      deleteClass(classToDelete);
+      toast({
+        title: "Success",
+        description: "Class deleted successfully",
+      });
+    }
+    setDeleteDialogOpen(false);
+    setClassToDelete(null);
   };
 
   return (
@@ -56,7 +72,7 @@ export default function Classes() {
           <h2 className="text-3xl font-heading font-bold text-foreground">Classes</h2>
           <p className="text-muted-foreground mt-1">Manage all active classes and schedules</p>
         </div>
-        <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+        <Button onClick={handleAddClick} className="bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus className="w-4 h-4 mr-2" />
           New Class
         </Button>
@@ -70,13 +86,9 @@ export default function Classes() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <CardTitle className="font-heading text-xl mb-2">{classItem.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{classItem.teacher}</p>
+                  <p className="text-sm text-muted-foreground">{getTeacherName(classItem.teacherId)}</p>
                 </div>
-                <div
-                  className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                    colorClasses[classItem.color as keyof typeof colorClasses]
-                  }`}
-                >
+                <div className="px-3 py-1 rounded-lg text-sm font-medium bg-primary text-primary-foreground">
                   {classItem.room}
                 </div>
               </div>
@@ -85,11 +97,11 @@ export default function Classes() {
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2 text-muted-foreground">
                   <Users className="w-4 h-4" />
-                  <span>{classItem.students} Students</span>
+                  <span>{classItem.enrolledStudents.length}/{classItem.capacity} Students</span>
                 </div>
                 <div className="flex items-center space-x-2 text-muted-foreground">
                   <Clock className="w-4 h-4" />
-                  <span>{classItem.schedule.split(" - ")[1]}</span>
+                  <span>{classItem.schedule.split(" - ")[1] || classItem.schedule}</span>
                 </div>
               </div>
               
@@ -99,17 +111,47 @@ export default function Classes() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  View Details
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button variant="outline" size="sm" onClick={() => handleAttendanceClick(classItem.id)}>
+                  <ClipboardCheck className="w-4 h-4 mr-1" />
                   Attendance
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleEditClick(classItem)}>
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleDeleteClick(classItem.id)}>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <ClassFormDialog open={dialogOpen} onOpenChange={setDialogOpen} classData={editClass} />
+
+      <AttendanceDialog
+        open={attendanceDialogOpen}
+        onOpenChange={setAttendanceDialogOpen}
+        classId={selectedClassId}
+        date={new Date().toISOString().split("T")[0]}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the class.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

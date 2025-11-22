@@ -1,18 +1,55 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { useSchool } from "@/contexts/SchoolContext";
+import { AttendanceDialog } from "@/components/AttendanceDialog";
 
 export default function Attendance() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+  const { classes, attendance, students } = useSchool();
 
-  const attendanceData = [
-    { class: "Mathematics - Grade 10", present: 28, absent: 4, total: 32, rate: 88 },
-    { class: "Physics - Grade 11", present: 26, absent: 2, total: 28, rate: 93 },
-    { class: "English - Grade 9", present: 32, absent: 3, total: 35, rate: 91 },
-    { class: "Chemistry - Grade 10", present: 27, absent: 3, total: 30, rate: 90 },
-  ];
+  const selectedDateStr = date?.toISOString().split("T")[0] || "";
+
+  const attendanceStats = useMemo(() => {
+    const dateRecords = attendance.filter((a) => a.date === selectedDateStr);
+    const present = dateRecords.filter((a) => a.status === "Present").length;
+    const absent = dateRecords.filter((a) => a.status === "Absent").length;
+    const late = dateRecords.filter((a) => a.status === "Late").length;
+    const total = present + absent + late;
+    const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+
+    return { present, absent, late, total, rate };
+  }, [attendance, selectedDateStr]);
+
+  const classAttendance = useMemo(() => {
+    return classes.map((classItem) => {
+      const classRecords = attendance.filter(
+        (a) => a.classId === classItem.id && a.date === selectedDateStr
+      );
+      const present = classRecords.filter((a) => a.status === "Present").length;
+      const absent = classRecords.filter((a) => a.status === "Absent").length;
+      const total = classItem.enrolledStudents.length;
+      const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+
+      return {
+        id: classItem.id,
+        name: classItem.name,
+        present,
+        absent,
+        total,
+        rate,
+      };
+    });
+  }, [classes, attendance, selectedDateStr]);
+
+  const handleMarkAttendance = (classId: string) => {
+    setSelectedClassId(classId);
+    setAttendanceDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -40,7 +77,7 @@ export default function Attendance() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Present</p>
-                    <p className="text-3xl font-heading font-bold text-foreground mt-1">113</p>
+                    <p className="text-3xl font-heading font-bold text-foreground mt-1">{attendanceStats.present}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-secondary text-secondary-foreground">
                     <CheckCircle className="w-6 h-6" />
@@ -54,7 +91,7 @@ export default function Attendance() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Absent</p>
-                    <p className="text-3xl font-heading font-bold text-foreground mt-1">12</p>
+                    <p className="text-3xl font-heading font-bold text-foreground mt-1">{attendanceStats.absent}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-destructive text-destructive-foreground">
                     <XCircle className="w-6 h-6" />
@@ -68,7 +105,7 @@ export default function Attendance() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Rate</p>
-                    <p className="text-3xl font-heading font-bold text-foreground mt-1">90%</p>
+                    <p className="text-3xl font-heading font-bold text-foreground mt-1">{attendanceStats.rate}%</p>
                   </div>
                   <div className="p-3 rounded-xl bg-primary text-primary-foreground">
                     <Clock className="w-6 h-6" />
@@ -85,11 +122,16 @@ export default function Attendance() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {attendanceData.map((item, index) => (
-                  <div key={index} className="p-4 rounded-lg bg-muted/50">
+                {classAttendance.map((item) => (
+                  <div key={item.id} className="p-4 rounded-lg bg-muted/50">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-foreground">{item.class}</h4>
-                      <span className="text-sm font-semibold text-secondary">{item.rate}%</span>
+                      <h4 className="font-medium text-foreground">{item.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-secondary">{item.rate}%</span>
+                        <Button size="sm" variant="outline" onClick={() => handleMarkAttendance(item.id)}>
+                          Mark
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-2">
@@ -120,6 +162,13 @@ export default function Attendance() {
           </Card>
         </div>
       </div>
+
+      <AttendanceDialog
+        open={attendanceDialogOpen}
+        onOpenChange={setAttendanceDialogOpen}
+        classId={selectedClassId}
+        date={selectedDateStr}
+      />
     </div>
   );
 }
