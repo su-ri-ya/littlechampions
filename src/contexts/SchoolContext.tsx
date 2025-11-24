@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { Student, Teacher, Class, AttendanceRecord } from "@/types";
+import { Student, Teacher, Class, AttendanceRecord, FeeStructure, FeePayment } from "@/types";
 
 interface SchoolContextType {
   students: Student[];
   teachers: Teacher[];
   classes: Class[];
   attendance: AttendanceRecord[];
+  feeStructures: FeeStructure[];
+  feePayments: FeePayment[];
   addStudent: (student: Omit<Student, "id">) => void;
   updateStudent: (id: string, student: Partial<Student>) => void;
   deleteStudent: (id: string) => void;
@@ -17,6 +19,12 @@ interface SchoolContextType {
   deleteClass: (id: string) => void;
   markAttendance: (attendance: Omit<AttendanceRecord, "id">) => void;
   getAttendanceByDate: (date: string) => AttendanceRecord[];
+  addFeeStructure: (structure: Omit<FeeStructure, "id">) => void;
+  updateFeeStructure: (id: string, structure: Partial<FeeStructure>) => void;
+  deleteFeeStructure: (id: string) => void;
+  addFeePayment: (payment: Omit<FeePayment, "id">) => void;
+  updateFeePayment: (id: string, payment: Partial<FeePayment>) => void;
+  deleteFeePayment: (id: string) => void;
 }
 
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
@@ -90,11 +98,50 @@ const initialClasses: Class[] = [
   },
 ];
 
+const initialFeeStructures: FeeStructure[] = [
+  {
+    id: "1",
+    name: "Tuition Fee",
+    grade: "Grade 10",
+    amount: 5000,
+    frequency: "Annually",
+    dueDate: "2024-12-31",
+    description: "Annual tuition fee for Grade 10",
+  },
+  {
+    id: "2",
+    name: "Lab Fee",
+    grade: "Grade 10",
+    amount: 500,
+    frequency: "Quarterly",
+    dueDate: "2024-03-31",
+    description: "Science lab and equipment fees",
+  },
+];
+
+const initialFeePayments: FeePayment[] = [
+  {
+    id: "1",
+    studentId: "1",
+    feeStructureId: "1",
+    amount: 5000,
+    paidAmount: 2500,
+    remainingAmount: 2500,
+    status: "Partial",
+    paymentDate: "2024-01-15",
+    dueDate: "2024-12-31",
+    paymentMethod: "Bank Transfer",
+    transactionId: "TXN123456",
+  },
+];
+
 export function SchoolProvider({ children }: { children: ReactNode }) {
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [teachers, setTeachers] = useState<Teacher[]>(initialTeachers);
   const [classes, setClasses] = useState<Class[]>(initialClasses);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [feeStructures, setFeeStructures] = useState<FeeStructure[]>(initialFeeStructures);
+  const [feePayments, setFeePayments] = useState<FeePayment[]>(initialFeePayments);
 
   const addStudent = (student: Omit<Student, "id">) => {
     const newStudent = { ...student, id: Date.now().toString() };
@@ -144,6 +191,32 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     return attendance.filter((a) => a.date === date);
   };
 
+  const addFeeStructure = (structure: Omit<FeeStructure, "id">) => {
+    const newStructure = { ...structure, id: Date.now().toString() };
+    setFeeStructures([...feeStructures, newStructure]);
+  };
+
+  const updateFeeStructure = (id: string, structureData: Partial<FeeStructure>) => {
+    setFeeStructures(feeStructures.map((s) => (s.id === id ? { ...s, ...structureData } : s)));
+  };
+
+  const deleteFeeStructure = (id: string) => {
+    setFeeStructures(feeStructures.filter((s) => s.id !== id));
+  };
+
+  const addFeePayment = (payment: Omit<FeePayment, "id">) => {
+    const newPayment = { ...payment, id: Date.now().toString() };
+    setFeePayments([...feePayments, newPayment]);
+  };
+
+  const updateFeePayment = (id: string, paymentData: Partial<FeePayment>) => {
+    setFeePayments(feePayments.map((p) => (p.id === id ? { ...p, ...paymentData } : p)));
+  };
+
+  const deleteFeePayment = (id: string) => {
+    setFeePayments(feePayments.filter((p) => p.id !== id));
+  };
+
   return (
     <SchoolContext.Provider
       value={{
@@ -151,6 +224,8 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
         teachers,
         classes,
         attendance,
+        feeStructures,
+        feePayments,
         addStudent,
         updateStudent,
         deleteStudent,
@@ -162,6 +237,12 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
         deleteClass,
         markAttendance,
         getAttendanceByDate,
+        addFeeStructure,
+        updateFeeStructure,
+        deleteFeeStructure,
+        addFeePayment,
+        updateFeePayment,
+        deleteFeePayment,
       }}
     >
       {children}
