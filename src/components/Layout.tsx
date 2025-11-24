@@ -10,25 +10,113 @@ import {
   Settings,
   Menu,
   X,
+  DollarSign,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Students", href: "/students", icon: Users },
-  { name: "Teachers", href: "/teachers", icon: GraduationCap },
-  { name: "Classes", href: "/classes", icon: BookOpen },
-  { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
-  { name: "Settings", href: "/settings", icon: Settings },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+  subItems?: { name: string; href: string }[];
+}
+
+const navigation: NavItem[] = [
+  { 
+    name: "Dashboard", 
+    href: "/", 
+    icon: LayoutDashboard,
+    subItems: [
+      { name: "Overview", href: "/" },
+      { name: "Analytics", href: "/analytics" },
+      { name: "Reports", href: "/reports" },
+    ]
+  },
+  { 
+    name: "Students", 
+    href: "/students", 
+    icon: Users,
+    subItems: [
+      { name: "All Students", href: "/students" },
+      { name: "Add Student", href: "/students/add" },
+      { name: "Import Students", href: "/students/import" },
+    ]
+  },
+  { 
+    name: "Teachers", 
+    href: "/teachers", 
+    icon: GraduationCap,
+    subItems: [
+      { name: "All Teachers", href: "/teachers" },
+      { name: "Add Teacher", href: "/teachers/add" },
+      { name: "Departments", href: "/teachers/departments" },
+    ]
+  },
+  { 
+    name: "Classes", 
+    href: "/classes", 
+    icon: BookOpen,
+    subItems: [
+      { name: "All Classes", href: "/classes" },
+      { name: "Schedule", href: "/classes/schedule" },
+      { name: "Subjects", href: "/classes/subjects" },
+    ]
+  },
+  { 
+    name: "Attendance", 
+    href: "/attendance", 
+    icon: ClipboardCheck,
+    subItems: [
+      { name: "Mark Attendance", href: "/attendance" },
+      { name: "Attendance Reports", href: "/attendance/reports" },
+      { name: "History", href: "/attendance/history" },
+    ]
+  },
+  { 
+    name: "Fees", 
+    href: "/fees", 
+    icon: DollarSign,
+    subItems: [
+      { name: "Fee Collection", href: "/fees" },
+      { name: "Fee Structure", href: "/fees/structure" },
+      { name: "Fee Reports", href: "/fees/reports" },
+      { name: "Payment History", href: "/fees/history" },
+    ]
+  },
+  { 
+    name: "Settings", 
+    href: "/settings", 
+    icon: Settings,
+    subItems: [
+      { name: "School Info", href: "/settings" },
+      { name: "Notifications", href: "/settings/notifications" },
+      { name: "User Management", href: "/settings/users" },
+    ]
+  },
 ];
 
 export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<string[]>(["Dashboard"]);
   const location = useLocation();
+
+  const toggleSection = (name: string) => {
+    setOpenSections((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
+    );
+  };
+
+  const isPathActive = (item: NavItem) => {
+    if (location.pathname === item.href) return true;
+    return item.subItems?.some(sub => location.pathname === sub.href) || false;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,24 +157,55 @@ export function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = isPathActive(item);
+              const isOpen = openSections.includes(item.name);
+              
               return (
-                <Link
+                <Collapsible
                   key={item.name}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
-                  onClick={() => setSidebarOpen(false)}
+                  open={isOpen}
+                  onOpenChange={() => toggleSection(item.name)}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.name}</span>
-                </Link>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors",
+                        isActive
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <item.icon className="w-5 h-5" />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                      {isOpen ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-1 ml-4 space-y-1">
+                    {item.subItems?.map((subItem) => (
+                      <Link
+                        key={subItem.href}
+                        to={subItem.href}
+                        className={cn(
+                          "block px-4 py-2 rounded-lg text-sm transition-colors",
+                          location.pathname === subItem.href
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                        )}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        {subItem.name}
+                      </Link>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
               );
             })}
           </nav>

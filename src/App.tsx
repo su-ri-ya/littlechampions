@@ -10,6 +10,8 @@ import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
 import Classes from "./pages/Classes";
 import Attendance from "./pages/Attendance";
+import Fees from "./pages/Fees";
+import FeeStructure from "./pages/FeeStructure";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +30,8 @@ const App = () => (
             <Route path="/teachers" element={<Layout><Teachers /></Layout>} />
             <Route path="/classes" element={<Layout><Classes /></Layout>} />
             <Route path="/attendance" element={<Layout><Attendance /></Layout>} />
+            <Route path="/fees" element={<Layout><Fees /></Layout>} />
+            <Route path="/fees/structure" element={<Layout><FeeStructure /></Layout>} />
             <Route path="/settings" element={<Layout><Settings /></Layout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
