@@ -8,6 +8,7 @@ import { SchoolProvider } from "./contexts/SchoolContext";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import AddStudent from "./pages/AddStudent";
+import ImportStudents from "./pages/ImportStudents";
 import StudentReports from "./pages/StudentReports";
 import Teachers from "./pages/Teachers";
 import AddTeacher from "./pages/AddTeacher";
@@ -41,6 +42,7 @@ const App = () => (
             {/* Students Routes */}
             <Route path="/students" element={<Layout><Students /></Layout>} />
             <Route path="/students/add" element={<Layout><AddStudent /></Layout>} />
+            <Route path="/students/import" element={<Layout><ImportStudents /></Layout>} />
             <Route path="/students/reports" element={<Layout><StudentReports /></Layout>} />
             
             {/* Teachers Routes */}
