@@ -12,6 +12,7 @@ import ImportStudents from "./pages/ImportStudents";
 import StudentReports from "./pages/StudentReports";
 import Teachers from "./pages/Teachers";
 import AddTeacher from "./pages/AddTeacher";
+import ImportTeachers from "./pages/ImportTeachers";
 import TeacherPerformance from "./pages/TeacherPerformance";
 import Classes from "./pages/Classes";
 import CreateClass from "./pages/CreateClass";
@@ -25,6 +26,7 @@ import FeeStructure from "./pages/FeeStructure";
 import FeeReports from "./pages/FeeReports";
 import PaymentHistory from "./pages/PaymentHistory";
 import Settings from "./pages/Settings";
+import RolesManagement from "./pages/RolesManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,7 @@ const App = () => (
             {/* Teachers Routes */}
             <Route path="/teachers" element={<Layout><Teachers /></Layout>} />
             <Route path="/teachers/add" element={<Layout><AddTeacher /></Layout>} />
+            <Route path="/teachers/import" element={<Layout><ImportTeachers /></Layout>} />
             <Route path="/teachers/performance" element={<Layout><TeacherPerformance /></Layout>} />
             
             {/* Classes Routes */}
@@ -69,6 +72,7 @@ const App = () => (
             
             {/* Settings */}
             <Route path="/settings" element={<Layout><Settings /></Layout>} />
+            <Route path="/settings/roles" element={<Layout><RolesManagement /></Layout>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

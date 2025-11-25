@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { Student, Teacher, Class, AttendanceRecord, FeeStructure, FeePayment } from "@/types";
+import { Student, Teacher, Class, AttendanceRecord, FeeStructure, FeePayment, Role } from "@/types";
 
 interface SchoolContextType {
   students: Student[];
@@ -8,6 +8,7 @@ interface SchoolContextType {
   attendance: AttendanceRecord[];
   feeStructures: FeeStructure[];
   feePayments: FeePayment[];
+  roles: Role[];
   addStudent: (student: Omit<Student, "id">) => void;
   updateStudent: (id: string, student: Partial<Student>) => void;
   deleteStudent: (id: string) => void;
@@ -25,6 +26,9 @@ interface SchoolContextType {
   addFeePayment: (payment: Omit<FeePayment, "id">) => void;
   updateFeePayment: (id: string, payment: Partial<FeePayment>) => void;
   deleteFeePayment: (id: string) => void;
+  addRole: (role: Omit<Role, "id">) => void;
+  updateRole: (id: string, role: Partial<Role>) => void;
+  deleteRole: (id: string) => void;
 }
 
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
@@ -135,6 +139,41 @@ const initialFeePayments: FeePayment[] = [
   },
 ];
 
+const initialRoles: Role[] = [
+  {
+    id: "1",
+    name: "Administrator",
+    description: "Full system access with all permissions",
+    permissions: [
+      "students.view", "students.create", "students.edit", "students.delete",
+      "teachers.view", "teachers.create", "teachers.edit", "teachers.delete",
+      "classes.view", "classes.create", "classes.edit", "classes.delete",
+      "attendance.view", "attendance.mark",
+      "fees.view", "fees.manage", "fees.collect",
+      "settings.view", "settings.manage", "roles.manage"
+    ],
+  },
+  {
+    id: "2",
+    name: "Teacher",
+    description: "Can manage classes and mark attendance",
+    permissions: [
+      "students.view",
+      "classes.view", "classes.edit",
+      "attendance.view", "attendance.mark",
+    ],
+  },
+  {
+    id: "3",
+    name: "Accountant",
+    description: "Manages fees and financial records",
+    permissions: [
+      "students.view",
+      "fees.view", "fees.manage", "fees.collect",
+    ],
+  },
+];
+
 export function SchoolProvider({ children }: { children: ReactNode }) {
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [teachers, setTeachers] = useState<Teacher[]>(initialTeachers);
@@ -142,6 +181,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>(initialFeeStructures);
   const [feePayments, setFeePayments] = useState<FeePayment[]>(initialFeePayments);
+  const [roles, setRoles] = useState<Role[]>(initialRoles);
 
   const addStudent = (student: Omit<Student, "id">) => {
     const newStudent = { ...student, id: Date.now().toString() };
@@ -217,6 +257,19 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     setFeePayments(feePayments.filter((p) => p.id !== id));
   };
 
+  const addRole = (role: Omit<Role, "id">) => {
+    const newRole = { ...role, id: Date.now().toString() };
+    setRoles([...roles, newRole]);
+  };
+
+  const updateRole = (id: string, roleData: Partial<Role>) => {
+    setRoles(roles.map((r) => (r.id === id ? { ...r, ...roleData } : r)));
+  };
+
+  const deleteRole = (id: string) => {
+    setRoles(roles.filter((r) => r.id !== id));
+  };
+
   return (
     <SchoolContext.Provider
       value={{
@@ -226,6 +279,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
         attendance,
         feeStructures,
         feePayments,
+        roles,
         addStudent,
         updateStudent,
         deleteStudent,
@@ -243,6 +297,9 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
         addFeePayment,
         updateFeePayment,
         deleteFeePayment,
+        addRole,
+        updateRole,
+        deleteRole,
       }}
     >
       {children}
