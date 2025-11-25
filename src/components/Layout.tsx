@@ -56,6 +56,7 @@ const navigation: NavItem[] = [
     subItems: [
       { name: "All Teachers", href: "/teachers" },
       { name: "Add Teacher", href: "/teachers/add" },
+      { name: "Import Teachers", href: "/teachers/import" },
       { name: "Departments", href: "/teachers/departments" },
     ]
   },
@@ -97,6 +98,7 @@ const navigation: NavItem[] = [
     subItems: [
       { name: "School Info", href: "/settings" },
       { name: "Notifications", href: "/settings/notifications" },
+      { name: "Roles & Permissions", href: "/settings/roles" },
       { name: "User Management", href: "/settings/users" },
     ]
   },
